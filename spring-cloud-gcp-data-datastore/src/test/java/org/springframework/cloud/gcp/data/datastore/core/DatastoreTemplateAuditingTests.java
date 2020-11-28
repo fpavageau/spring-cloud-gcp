@@ -62,6 +62,8 @@ public class DatastoreTemplateAuditingTests {
 
 	@Autowired
 	DatastoreTemplate datastoreTemplate;
+	@Autowired
+	Datastore datastore;
 
 	@Test
 	public void testModifiedNullProperties() {
@@ -80,6 +82,20 @@ public class DatastoreTemplateAuditingTests {
 		testEntity.lastUser = "person";
 
 		this.datastoreTemplate.saveAll(Collections.singletonList(testEntity));
+	}
+
+	@Test
+	public void testInTransaction() {
+		when(datastore.runInTransaction(any()))
+				.thenAnswer(invocation -> {
+					Datastore.TransactionCallable<?> callable = invocation.getArgument(0);
+					return callable.run(datastore);
+				});
+
+		TestEntity testEntity = new TestEntity();
+		testEntity.id = "a";
+
+		this.datastoreTemplate.performTransaction(operations -> operations.save(testEntity));
 	}
 
 	/**
